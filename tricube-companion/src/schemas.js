@@ -13,6 +13,7 @@ export const CharacterSchema = z.object({
     maxKarma: z.number().int().min(1).max(6).default(3),
     maxResolve: z.number().int().min(1).max(6).default(3),
     sceneCount: z.number().int().min(0).default(0),
+    level: z.number().int().min(0).default(0),
     tags: z.array(z.string()).default([]),
 });
 

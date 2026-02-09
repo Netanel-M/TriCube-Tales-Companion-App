@@ -22,6 +22,7 @@ export const CharacterCreator = () => {
             maxKarma: 3,
             maxResolve: 3,
             sceneCount: 0,
+            level: 0,
             perks: [formData.perk],
             quirks: [formData.quirk],
             tags: [formData.trait, formData.concept, formData.perk, formData.quirk]

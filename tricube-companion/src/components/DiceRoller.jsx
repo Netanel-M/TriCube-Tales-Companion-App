@@ -35,7 +35,7 @@ export const DiceRoller = ({ diceCount, targetNumber, onRoll, baseTN, onDifficul
     const isCritFail = rolledDiceCount === 1 && results.includes(1);
 
     return (
-        <div className="flex flex-col items-center gap-8">
+        <div className="flex flex-col items-center gap-8" style={{ padding: '8px' }}>
             {/* Difficulty Selector */}
             <div className="w-full max-w-sm">
                 <p className="text-center text-xs text-gray-500 mb-3 uppercase tracking-widest">Difficulty</p>
@@ -118,7 +118,7 @@ export const DiceRoller = ({ diceCount, targetNumber, onRoll, baseTN, onDifficul
             )}
 
             {/* Roll Button */}
-            <button onClick={roll} disabled={isRolling} className="btn-primary text-lg px-12 py-4 disabled:opacity-50">
+            <button onClick={roll} disabled={isRolling} style={{ marginTop: '8px' }} className="btn-primary text-lg px-12 py-4 disabled:opacity-50">
                 Roll {diceCount}d6
             </button>
 

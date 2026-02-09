@@ -240,7 +240,9 @@ const App = () => {
         {showLevelUp && (() => {
           const selectedGenre = GENRES.find(g => g.id === character.genre);
           const sceneNum = character.sceneCount || 1;
-          const isStatUpgrade = sceneNum % 2 === 0;
+          const currentLevel = character.level || 0;
+          const nextLevel = currentLevel + 1;
+          const isStatUpgrade = nextLevel % 2 === 0;
 
           return (
             <motion.div
@@ -256,80 +258,73 @@ const App = () => {
                 className="card p-6"
                 style={{ maxWidth: '450px', width: '100%', background: 'white' }}
               >
-                {/* Scene rewards info */}
-                <div className="card p-4" style={{ marginBottom: '16px', background: 'rgba(201,162,39,0.1)' }}>
-                  <p className="text-sm text-center" style={{ marginBottom: '12px' }}>
-                    <strong>Level Up Rewards:</strong>
-                  </p>
-                  <div className="text-xs text-gray-600 space-y-2">
-                    <p>• <strong>Odd scenes:</strong> Choose a new Perk OR Quirk</p>
-                    <p>• <strong>Even scenes:</strong> Increase max Karma OR Resolve</p>
+                {/* Scene rewards info - Only show in 'ask' step */}
+                {levelUpStep === 'ask' && (
+                  <div className="card p-4" style={{ margin: '16px', background: 'rgba(201,162,39,0.1)' }}>
+                    <p className="text-sm text-center" style={{ marginBottom: '12px' }}>
+                      <strong>Level Up Rewards:</strong>
+                    </p>
+                    <div className="text-xs text-gray-600 space-y-2" style={{ marginLeft: '16px' }}>
+                      <p> <strong>Odd levels:</strong> Choose a new Perk OR Quirk</p>
+                      <p> <strong>Even levels:</strong> Increase max Karma OR Resolve</p>
+                    </div>
                   </div>
-                </div>
+                )}
 
-                {/* Current progress */}
-                <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
-                  <div className="flex-1 text-center card p-3">
-                    <p className="text-2xl font-bold" style={{ color: 'var(--crimson)' }}>{character.sceneCount || 1}</p>
-                    <p className="text-xs text-gray-500">Scenes</p>
+                {/* Current progress - Only show in 'ask' step */}
+                {levelUpStep === 'ask' && (
+                  <div style={{ display: 'flex', gap: '12px', margin: '24px' }}>
+                    <div className="flex-1 text-center card p-3">
+                      <p className="text-2xl font-bold" style={{ color: 'var(--crimson)' }}>{character.sceneCount || 1}</p>
+                      <p className="text-xs text-gray-500">Scenes</p>
+                    </div>
+                    <div className="flex-1 text-center card p-3">
+                      <p className="text-2xl font-bold" style={{ color: 'var(--gold)' }}>{character.maxKarma || 3}</p>
+                      <p className="text-xs text-gray-500">Max Karma</p>
+                    </div>
+                    <div className="flex-1 text-center card p-3">
+                      <p className="text-2xl font-bold" style={{ color: 'var(--forest)' }}>{character.maxResolve || 3}</p>
+                      <p className="text-xs text-gray-500">Max Resolve</p>
+                    </div>
                   </div>
-                  <div className="flex-1 text-center card p-3">
-                    <p className="text-2xl font-bold" style={{ color: 'var(--gold)' }}>{character.maxKarma || 3}</p>
-                    <p className="text-xs text-gray-500">Max Karma</p>
-                  </div>
-                  <div className="flex-1 text-center card p-3">
-                    <p className="text-2xl font-bold" style={{ color: 'var(--forest)' }}>{character.maxResolve || 3}</p>
-                    <p className="text-xs text-gray-500">Max Resolve</p>
-                  </div>
-                </div>
+                )}
 
                 {/* Step: Ask */}
                 {levelUpStep === 'ask' && (
                   <>
                     <div style={{ textAlign: 'center', marginBottom: '24px' }}>
                       <Flag size={48} style={{ color: 'var(--crimson)', margin: '0 auto 12px' }} />
-                      <h2 className="text-2xl font-bold">Scene {sceneNum} Complete!</h2>
-                      <p className="text-gray-600" style={{ marginTop: '8px' }}>Karma and Resolve restored to maximum.</p>
+                      <h2 className="text-2xl font-bold">Scene Complete!</h2>
+                      <p className="text-gray-600" style={{ marginTop: '8px' }}>Karma and Resolve restored.</p>
                     </div>
 
-                    <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
-                      <div className="flex-1 text-center card p-3">
-                        <p className="text-2xl font-bold" style={{ color: 'var(--gold)' }}>{character.maxKarma || 3}/{character.maxKarma || 3}</p>
-                        <p className="text-xs text-gray-500">Karma</p>
-                      </div>
-                      <div className="flex-1 text-center card p-3">
-                        <p className="text-2xl font-bold" style={{ color: 'var(--forest)' }}>{character.maxResolve || 3}/{character.maxResolve || 3}</p>
-                        <p className="text-xs text-gray-500">Resolve</p>
-                      </div>
-                    </div>
-
-                    <p className="text-center text-sm text-gray-600 mb-4">Is it time to level up?</p>
+                    <p className="text-center text-sm text-gray-600 mb-4">You are currently Level {currentLevel}. Next level ({nextLevel}) grants: <strong>{isStatUpgrade ? 'Stat Upgrade' : 'Perk/Quirk'}</strong>.</p>
 
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <button onClick={() => { setShowLevelUp(false); setLevelUpStep('ask'); }} className="flex-1 btn-secondary">
-                        Skip
+                        Skip Level Up
                       </button>
                       <button onClick={() => setLevelUpStep(isStatUpgrade ? 'stat' : 'perk')} className="flex-1 btn-primary flex items-center justify-center gap-2">
-                        <TrendingUp size={16} /> Level Up
+                        <TrendingUp size={16} /> Level Up to {nextLevel}
                       </button>
                     </div>
                   </>
                 )}
 
-                {/* Step: Stat Upgrade (every 2 scenes) */}
+                {/* Step: Stat Upgrade (Even Levels) */}
                 {levelUpStep === 'stat' && (
                   <>
                     <div style={{ textAlign: 'center', marginBottom: '24px' }}>
                       <TrendingUp size={48} style={{ color: 'var(--gold)', margin: '0 auto 12px' }} />
-                      <h2 className="text-2xl font-bold">Increase Max Stat</h2>
-                      <p className="text-gray-600" style={{ marginTop: '8px' }}>Every 2 scenes, you can boost your maximum Karma or Resolve.</p>
+                      <h2 className="text-2xl font-bold">Level {nextLevel}: Increase Stat</h2>
+                      <p className="text-gray-600" style={{ marginTop: '8px' }}>Time to boost your maximum Karma or Resolve.</p>
                     </div>
 
                     <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
                       <button
                         onClick={() => {
                           if ((character.maxKarma || 3) < 6) {
-                            updateStats({ maxKarma: (character.maxKarma || 3) + 1, karma: (character.maxKarma || 3) + 1 });
+                            updateStats({ maxKarma: (character.maxKarma || 3) + 1, karma: (character.maxKarma || 3) + 1, level: nextLevel });
                           }
                           setShowLevelUp(false);
                           setLevelUpStep('ask');
@@ -345,7 +340,7 @@ const App = () => {
                       <button
                         onClick={() => {
                           if ((character.maxResolve || 3) < 6) {
-                            updateStats({ maxResolve: (character.maxResolve || 3) + 1, resolve: (character.maxResolve || 3) + 1 });
+                            updateStats({ maxResolve: (character.maxResolve || 3) + 1, resolve: (character.maxResolve || 3) + 1, level: nextLevel });
                           }
                           setShowLevelUp(false);
                           setLevelUpStep('ask');
@@ -361,17 +356,17 @@ const App = () => {
                     </div>
 
                     <button onClick={() => { setShowLevelUp(false); setLevelUpStep('ask'); }} className="btn-secondary w-full text-sm">
-                      Skip stat upgrade
+                      Cancel (Skip Level Up)
                     </button>
                   </>
                 )}
 
-                {/* Step: Perk/Quirk Selection (every scene) */}
+                {/* Step: Perk/Quirk Selection (Odd Levels) */}
                 {levelUpStep === 'perk' && selectedGenre && (
                   <>
                     <div style={{ textAlign: 'center', marginBottom: '24px' }}>
                       <Plus size={48} style={{ color: 'var(--forest)', margin: '0 auto 12px' }} />
-                      <h2 className="text-2xl font-bold">Add Perk or Quirk</h2>
+                      <h2 className="text-2xl font-bold">Level {nextLevel}: New Trait</h2>
                       <p className="text-gray-600" style={{ marginTop: '8px' }}>Choose one new perk or quirk from your genre.</p>
                     </div>
 
@@ -382,7 +377,7 @@ const App = () => {
                           <button
                             key={perk}
                             onClick={() => {
-                              updateStats({ perks: [...(character.perks || []), perk] });
+                              updateStats({ perks: [...(character.perks || []), perk], level: nextLevel });
                               setShowLevelUp(false);
                               setLevelUpStep('ask');
                             }}
@@ -406,7 +401,7 @@ const App = () => {
                           <button
                             key={quirk}
                             onClick={() => {
-                              updateStats({ quirks: [...(character.quirks || []), quirk] });
+                              updateStats({ quirks: [...(character.quirks || []), quirk], level: nextLevel });
                               setShowLevelUp(false);
                               setLevelUpStep('ask');
                             }}
@@ -424,7 +419,7 @@ const App = () => {
                     </div>
 
                     <button onClick={() => { setShowLevelUp(false); setLevelUpStep('ask'); }} className="btn-secondary w-full">
-                      Skip (no new perk/quirk)
+                      Cancel (Skip Level Up)
                     </button>
                   </>
                 )}
