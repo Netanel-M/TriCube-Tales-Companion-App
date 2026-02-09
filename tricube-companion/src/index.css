@@ -1,0 +1,129 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* DnD Fantasy Palette */
+  --parchment: #f5ebe0;
+  --parchment-dark: #e6dbc8;
+  --ink: #1a1a1a;
+  --gold: #c9a227;
+  --gold-light: #f0d678;
+  --crimson: #8b1e3f;
+  --crimson-light: #b12a4e;
+  --forest: #2d4a3e;
+  --shadow: rgba(0, 0, 0, 0.15);
+
+  /* Spacing */
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Cinzel', 'Georgia', serif;
+  background: var(--parchment);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  padding: 0;
+}
+
+/* Glass Card - Fantasy Style */
+.card {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--gold);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px var(--shadow);
+}
+
+/* Primary Button */
+.btn-primary {
+  background: linear-gradient(135deg, var(--crimson), var(--crimson-light));
+  color: white;
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(139, 30, 63, 0.4);
+}
+
+/* Secondary Button */
+.btn-secondary {
+  background: transparent;
+  border: 2px solid var(--gold);
+  color: var(--ink);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.btn-secondary:hover {
+  background: var(--gold);
+  color: white;
+}
+
+/* App Container - Mobile First */
+.app-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-md);
+}
+
+@media (min-width: 768px) {
+  .app-container {
+    padding: 0 var(--spacing-lg);
+  }
+}
+
+/* Gradient Text */
+.text-gradient {
+  background: linear-gradient(90deg, var(--crimson), var(--gold));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--parchment-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--gold);
+  border-radius: 4px;
+}
+
+/* Mobile-friendly tap targets */
+button {
+  min-height: 44px;
+}
+
+/* Consistent section spacing */
+.section-spacing {
+  margin-bottom: var(--spacing-lg);
+}
+
+@media (min-width: 768px) {
+  .section-spacing {
+    margin-bottom: var(--spacing-xl);
+  }
+}
