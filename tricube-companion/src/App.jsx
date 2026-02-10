@@ -289,8 +289,11 @@ const App = () => {
               <button onClick={resetGame} className="btn-primary">Confirm Reset</button>
 
               <div style={{ marginTop: '48px', paddingTop: '24px', borderTop: '1px solid var(--gold)' }}>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-500 mb-2">
                   Based on <a href="https://www.drivethrurpg.com/en/product/294202" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--gold)', textDecoration: 'underline' }}>Tricube Tales</a> by Richard Woolcock.
+                </p>
+                <p className="text-xs text-gray-500">
+                  This work includes material taken from <a href="https://www.ironswornrpg.com" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--gold)', textDecoration: 'underline' }}>Ironsworn</a>, created by Shawn Tomkin, and licensed under the <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--gold)', textDecoration: 'underline' }}>Creative Commons Attribution 4.0 International License</a>.
                 </p>
               </div>
             </motion.div>

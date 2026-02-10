@@ -9,6 +9,7 @@ export const changelogData = [
             'Added a proper Journal where you can log your adventure.',
             'Added a font scaling slider to make text bigger.',
             'Added custom perks, quirks and concepts.',
+            'Replaced generic Oracle tables with Datasworn tables.',
             'Improved UI consistency.',
             'Fixed a bug where text entries made the app zoom on mobile.',
         ]

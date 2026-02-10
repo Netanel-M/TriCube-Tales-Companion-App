@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, RefreshCw, HelpCircle, Zap, AlertTriangle } from 'lucide-react';
-import { ORACLE_DATA, getYesNoResult } from '../data/oracleData';
+import { Sparkles, RefreshCw, HelpCircle, Zap, AlertTriangle, LayoutGrid, Target, User, MapPin, Sword } from 'lucide-react';
+import { rollOracle, askOracle as askIronswornOracle, YES_NO_ODDS } from '../data/ironswornOracle';
 
 export const Oracle = () => {
-    const [activeTab, setActiveTab] = useState('spark'); // spark, yesno, twist
+    const [activeTab, setActiveTab] = useState('spark'); // spark, yesno, twist, misc
 
     // Spark State
     const [wheels, setWheels] = useState({
-        theme: ORACLE_DATA.themes[0],
-        action: ORACLE_DATA.actions[0],
-        subject: ORACLE_DATA.subjects[0]
+        action: 'Spin to Reveal',
+        theme: 'Spin to Reveal',
+        descriptor: 'Spin to Reveal'
     });
     const [isSpinning, setIsSpinning] = useState(false);
 
@@ -23,14 +23,19 @@ export const Oracle = () => {
     const [twist, setTwist] = useState(null);
     const [isTwisting, setIsTwisting] = useState(false);
 
+    // Misc State
+    const [miscResult, setMiscResult] = useState(null);
+    const [isMiscSpinning, setIsMiscSpinning] = useState(false);
+    const [miscType, setMiscType] = useState(null); // 'role', 'goal', 'trouble', 'combat'
+
     // Handlers
     const spinSpark = () => {
         setIsSpinning(true);
         setTimeout(() => {
             setWheels({
-                theme: ORACLE_DATA.themes[Math.floor(Math.random() * ORACLE_DATA.themes.length)],
-                action: ORACLE_DATA.actions[Math.floor(Math.random() * ORACLE_DATA.actions.length)],
-                subject: ORACLE_DATA.subjects[Math.floor(Math.random() * ORACLE_DATA.subjects.length)]
+                action: rollOracle('action'),
+                theme: rollOracle('theme'),
+                descriptor: rollOracle('descriptor')
             });
             setIsSpinning(false);
         }, 800);
@@ -40,7 +45,7 @@ export const Oracle = () => {
         setIsAsking(true);
         setYesNoResult(null);
         setTimeout(() => {
-            const result = getYesNoResult(odds);
+            const result = askIronswornOracle(odds);
             setYesNoResult(result);
             setIsAsking(false);
         }, 600);
@@ -49,9 +54,19 @@ export const Oracle = () => {
     const generateTwist = () => {
         setIsTwisting(true);
         setTimeout(() => {
-            setTwist(ORACLE_DATA.plotTwists[Math.floor(Math.random() * ORACLE_DATA.plotTwists.length)]);
+            setTwist(rollOracle('twist'));
             setIsTwisting(false);
         }, 600);
+    };
+
+    const rollMisc = (type) => {
+        setIsMiscSpinning(true);
+        setMiscType(type);
+        setMiscResult(null);
+        setTimeout(() => {
+            setMiscResult(rollOracle(type));
+            setIsMiscSpinning(false);
+        }, 500);
     };
 
     // Dynamic Button Config
@@ -60,6 +75,7 @@ export const Oracle = () => {
             case 'spark': return { label: 'SPIN IDEAS', icon: RefreshCw, action: spinSpark, disabled: isSpinning };
             case 'yesno': return { label: 'ASK THE ORACLE', icon: HelpCircle, action: askOracle, disabled: isAsking };
             case 'twist': return { label: 'REVEAL PLOT TWIST', icon: Zap, action: generateTwist, disabled: isTwisting };
+            case 'misc': return { label: 'SELECT A TABLE', icon: LayoutGrid, action: () => { }, disabled: true }; // Action is handled by internal buttons
             default: return { label: 'ACT', icon: Sparkles, action: () => { }, disabled: true };
         }
     };
@@ -75,7 +91,8 @@ export const Oracle = () => {
                 {[
                     { id: 'spark', icon: Sparkles, label: 'Spark' },
                     { id: 'yesno', icon: HelpCircle, label: 'Ask' },
-                    { id: 'twist', icon: Zap, label: 'Twist' }
+                    { id: 'twist', icon: Zap, label: 'Twist' },
+                    { id: 'misc', icon: LayoutGrid, label: 'Misc' }
                 ].map(tab => (
                     <button
                         key={tab.id}
@@ -106,38 +123,27 @@ export const Oracle = () => {
                             exit={{ opacity: 0, x: 20 }}
                             className="flex flex-col gap-6 h-full justify-center w-full"
                         >
-                            <div className="grid grid-cols-3 gap-3 w-full">
-                                {Object.entries(wheels).map(([key, value]) => (
-                                    <div key={key} className="flex flex-col items-center gap-2">
-                                        <span className="text-[10px] uppercase font-bold tracking-widest" style={{ color: 'var(--ink)', opacity: 0.6 }}>{key}</span>
-                                        <div className="w-full h-24 border rounded-xl flex items-center justify-center overflow-hidden relative" style={{ borderColor: 'var(--gold)', background: 'white' }}>
-                                            <AnimatePresence mode="popLayout">
-                                                <motion.div
-                                                    key={value}
-                                                    initial={{ y: isSpinning ? 50 : 0, opacity: 0 }}
-                                                    animate={{ y: 0, opacity: 1 }}
-                                                    exit={{ y: -50, opacity: 0 }}
-                                                    className="text-xs md:text-sm font-bold text-center px-1 break-words w-full"
-                                                    style={{ color: 'var(--ink)' }}
-                                                >
-                                                    {value}
-                                                </motion.div>
-                                            </AnimatePresence>
-                                            {isSpinning && (
-                                                <motion.div
-                                                    animate={{ y: [0, 100] }}
-                                                    transition={{ duration: 0.1, repeat: Infinity, ease: 'linear' }}
-                                                    className="absolute inset-x-0 top-0 h-full pointer-events-none"
-                                                    style={{ background: 'linear-gradient(to bottom, transparent, rgba(201, 162, 39, 0.2), transparent)' }}
-                                                />
-                                            )}
-                                        </div>
+                            <div className="flex flex-col gap-3 w-full px-2">
+                                {wheels.action === 'Spin to Reveal' ? (
+                                    <div className="text-center px-4 py-8 rounded-lg w-full italic text-sm border bg-white/50" style={{ borderColor: 'var(--gold)', color: 'var(--ink)' }}>
+                                        Spin to reveal an oracle...
                                     </div>
-                                ))}
-                            </div>
-
-                            <div className="text-center px-4 py-3 rounded-lg w-full italic text-sm border" style={{ background: 'rgba(255,255,255,0.5)', borderColor: 'var(--gold)', color: 'var(--ink)' }}>
-                                "{wheels.theme} {wheels.subject} will {wheels.action.toLowerCase()}."
+                                ) : (
+                                    <>
+                                        <div className="flex flex-col gap-1 p-3 rounded-lg border bg-white" style={{ borderColor: 'var(--gold)' }}>
+                                            <span className="text-[10px] uppercase font-bold tracking-widest text-center w-full" style={{ color: 'var(--ink)', opacity: 0.6 }}>Action</span>
+                                            <span className="font-bold text-xl text-center break-words" style={{ color: 'var(--ink)' }}>{wheels.action}</span>
+                                        </div>
+                                        <div className="flex flex-col gap-1 p-3 rounded-lg border bg-white" style={{ borderColor: 'var(--gold)' }}>
+                                            <span className="text-[10px] uppercase font-bold tracking-widest text-center w-full" style={{ color: 'var(--ink)', opacity: 0.6 }}>Theme</span>
+                                            <span className="font-bold text-xl text-center break-words" style={{ color: 'var(--ink)' }}>{wheels.theme}</span>
+                                        </div>
+                                        <div className="flex flex-col gap-1 p-3 rounded-lg border bg-white" style={{ borderColor: 'var(--gold)' }}>
+                                            <span className="text-[10px] uppercase font-bold tracking-widest text-center w-full" style={{ color: 'var(--ink)', opacity: 0.6 }}>Descriptor</span>
+                                            <span className="font-bold text-xl text-center break-words" style={{ color: 'var(--ink)' }}>{wheels.descriptor}</span>
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </motion.div>
                     )}
@@ -154,7 +160,7 @@ export const Oracle = () => {
                             <label className="w-full">
                                 <span className="text-xs uppercase font-bold tracking-widest block mb-2 text-center" style={{ color: 'var(--ink)', opacity: 0.6 }}>Likelihood</span>
                                 <div className="grid grid-cols-5 gap-1 p-1 rounded-lg border" style={{ borderColor: 'var(--gold)' }}>
-                                    {['Almost Certain', 'Likely', '50/50', 'Unlikely', 'Rare'].map(o => (
+                                    {Object.keys(YES_NO_ODDS).map(o => (
                                         <button
                                             key={o}
                                             onClick={() => setOdds(o)}
@@ -185,9 +191,9 @@ export const Oracle = () => {
                                         animate={{ scale: 1, opacity: 1 }}
                                         className="text-center"
                                     >
-                                        <h3 className="text-4xl md:text-5xl font-black mb-2" style={{ color: 'var(--ink)' }}>{yesNoResult.split(',')[0]}</h3>
-                                        {yesNoResult.includes(',') && (
-                                            <p className="font-bold text-lg" style={{ color: 'var(--crimson)' }}>{yesNoResult.split(',')[1]}</p>
+                                        <h3 className="text-4xl md:text-5xl font-black mb-2" style={{ color: 'var(--ink)' }}>{yesNoResult.answer}</h3>
+                                        {yesNoResult.qualifier && (
+                                            <p className="font-bold text-lg" style={{ color: 'var(--crimson)' }}>{yesNoResult.qualifier}</p>
                                         )}
                                     </motion.div>
                                 ) : (
@@ -209,7 +215,7 @@ export const Oracle = () => {
                             exit={{ opacity: 0, x: 20 }}
                             className="flex flex-col gap-6 h-full items-center justify-center text-center p-2 w-full"
                         >
-                            <div className="flex-1 flex flex-col items-center justify-center w-full min-h-[140px]">
+                            <div className="flex-1 flex flex-col items-center justify-center w-full min-h-[140px] px-4">
                                 {isTwisting ? (
                                     <motion.div
                                         animate={{ scale: [1, 1.2, 1] }}
@@ -222,7 +228,7 @@ export const Oracle = () => {
                                     <motion.div
                                         initial={{ y: 20, opacity: 0 }}
                                         animate={{ y: 0, opacity: 1 }}
-                                        className="p-6 border rounded-xl w-full max-h-[220px] overflow-y-auto"
+                                        className="p-6 border rounded-xl w-full max-h-[300px] overflow-y-auto break-words"
                                         style={{ background: 'rgba(139, 30, 63, 0.1)', borderColor: 'var(--crimson)' }}
                                     >
                                         <AlertTriangle size={32} className="mx-auto mb-4" style={{ color: 'var(--crimson)' }} />
@@ -240,21 +246,80 @@ export const Oracle = () => {
                         </motion.div>
                     )}
 
+                    {/* MISC TAB */}
+                    {activeTab === 'misc' && (
+                        <motion.div
+                            key="misc"
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: 20 }}
+                            className="flex flex-col gap-6 h-full items-center justify-start pt-4 p-2 w-full"
+                        >
+                            <div className="grid grid-cols-2 gap-3 w-full">
+                                <button onClick={() => rollMisc('role')} className={`btn-secondary flex flex-col items-center gap-1 p-3 text-xs ${miscType === 'role' ? 'ring-2 ring-gold' : ''}`}>
+                                    <User size={16} /> Role
+                                </button>
+                                <button onClick={() => rollMisc('goal')} className={`btn-secondary flex flex-col items-center gap-1 p-3 text-xs ${miscType === 'goal' ? 'ring-2 ring-gold' : ''}`}>
+                                    <Target size={16} /> Goal
+                                </button>
+                                <button onClick={() => rollMisc('trouble')} className={`btn-secondary flex flex-col items-center gap-1 p-3 text-xs ${miscType === 'trouble' ? 'ring-2 ring-gold' : ''}`}>
+                                    <MapPin size={16} /> Trouble
+                                </button>
+                                <button onClick={() => rollMisc('combat')} className={`btn-secondary flex flex-col items-center gap-1 p-3 text-xs ${miscType === 'combat' ? 'ring-2 ring-gold' : ''}`}>
+                                    <Sword size={16} /> Combat
+                                </button>
+                            </div>
+
+                            <div className="flex-1 flex flex-col items-center justify-center w-full min-h-[140px] px-4">
+                                {isMiscSpinning ? (
+                                    <motion.div
+                                        animate={{ scale: [1, 1.2, 1] }}
+                                        transition={{ duration: 0.5, repeat: Infinity }}
+                                        style={{ color: 'var(--gold)' }}
+                                    >
+                                        <LayoutGrid size={48} />
+                                    </motion.div>
+                                ) : miscResult ? (
+                                    <motion.div
+                                        initial={{ y: 20, opacity: 0 }}
+                                        animate={{ y: 0, opacity: 1 }}
+                                        className="p-6 border rounded-xl w-full max-h-[220px] overflow-y-auto break-words text-center"
+                                        style={{ background: 'white', borderColor: 'var(--gold)' }}
+                                    >
+                                        <span className="text-[10px] uppercase font-bold tracking-widest block mb-2 opacity-60">{miscType}</span>
+                                        <p className="text-lg md:text-xl font-bold leading-tight" style={{ color: 'var(--ink)' }}>
+                                            "{miscResult}"
+                                        </p>
+                                    </motion.div>
+                                ) : (
+                                    <div className="text-center" style={{ color: 'var(--ink)', opacity: 0.5 }}>
+                                        <LayoutGrid size={48} className="mx-auto mb-2 opacity-50" />
+                                        <p className="text-sm">Select a category above...</p>
+                                    </div>
+                                )}
+                            </div>
+                        </motion.div>
+                    )}
                 </AnimatePresence>
             </div>
 
             {/* Action Area (Fixed Bottom) */}
-            {/* Action Area (Fixed Bottom) */}
             <div className="w-full shrink-0 border-t" style={{ borderColor: 'var(--gold)' }}>
-                <button
-                    onClick={actionConfig.action}
-                    disabled={actionConfig.disabled}
-                    className="btn-primary flex items-center justify-center gap-2 px-8 py-4 text-lg"
-                    style={{ margin: '16px', width: 'calc(100% - 32px)' }}
-                >
-                    <ActionIcon size={20} className={actionConfig.disabled ? 'animate-spin' : ''} />
-                    {actionConfig.label}
-                </button>
+                {activeTab === 'misc' ? (
+                    <div className="flex items-center justify-center gap-2 px-8 py-6 text-lg text-gray-400 italic">
+                        Select a category above to roll
+                    </div>
+                ) : (
+                    <button
+                        onClick={actionConfig.action}
+                        disabled={actionConfig.disabled}
+                        className="btn-primary flex items-center justify-center gap-2 px-8 py-4 text-lg"
+                        style={{ margin: '16px', width: 'calc(100% - 32px)' }}
+                    >
+                        <ActionIcon size={20} className={actionConfig.disabled ? 'animate-spin' : ''} />
+                        {actionConfig.label}
+                    </button>
+                )}
             </div>
         </div>
     );
