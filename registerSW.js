@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/TriCube-Tales-Companion-App/sw.js', { scope: '/TriCube-Tales-Companion-App/' })})}
