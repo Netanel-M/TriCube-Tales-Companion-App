@@ -13,5 +13,14 @@ export const changelogData = [
             'Improved UI consistency.',
             'Fixed a bug where text entries made the app zoom on mobile.',
         ]
+    },
+    {
+        version: '0.3',
+        date: '2026-02-10',
+        title: 'Update',
+        changes: [
+            'You can now only use a quirk before a roll and only use a perk after a roll (if it makes sense).',
+            'Improved dice looks in journal and rolling tab.'
+        ]
     }
 ];

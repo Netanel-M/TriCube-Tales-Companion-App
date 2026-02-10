@@ -7,6 +7,7 @@ import { Oracle } from './components/Oracle';
 import { GENRES } from './data/genres';
 import { changelogData } from './data/changelog';
 import { ChangelogModal } from './components/ChangelogModal';
+import { DieFace } from './components/DieFace';
 import { User, Dices, Sparkles, History, Settings, Sword, Zap, Shield, Trash2, Activity, AlertTriangle, Star, TrendingUp, Flag, Plus, BookOpen, Type } from 'lucide-react';
 
 const App = () => {
@@ -22,6 +23,10 @@ const App = () => {
   const [customPerk, setCustomPerk] = useState('');
   const [customQuirk, setCustomQuirk] = useState('');
   const [journalEntry, setJournalEntry] = useState('');
+
+  // New State for Two-Phase Roll
+  const [rollPhase, setRollPhase] = useState('setup'); // 'setup', 'resolve'
+  const [pendingResult, setPendingResult] = useState(null);
 
   // Changelog State
   const [showChangelog, setShowChangelog] = useState(false);
@@ -40,25 +45,62 @@ const App = () => {
   };
 
   const diceCount = matchTrait ? 3 : (matchConcept ? 2 : 1);
+
+  // Calculate Target Number dynamically based on phase
+  // In setup: Base TN + Quirk (if selected)
+  // In resolve: Base TN + Quirk (locked from setup) - Perk (if selected in resolve)
   let derivedTN = baseTN;
-  if (usePerk) derivedTN -= 1;
   if (useQuirk) derivedTN += 1;
+  if (rollPhase === 'resolve' && usePerk) derivedTN -= 1;
   derivedTN = Math.max(2, Math.min(6, derivedTN));
 
-  const handleRollResult = (result) => {
-    const { successes } = result;
-    addLogEntry({ id: crypto.randomUUID(), timestamp: Date.now(), type: 'roll', content: `Roll (TN ${derivedTN}+)`, result });
+  const handleRollComplete = (result) => {
+    setPendingResult(result);
+    setRollPhase('resolve');
+    // Ensure perk is reset for the new resolution phase, though it should be handled by the UI
+    setUsePerk(false);
+  };
+
+  const commitRoll = (action = 'accept') => { // 'accept', 'fail_resolve'
+    if (!pendingResult) return;
+
+    // Recalculate successes based on final TN
+    const successes = pendingResult.results.filter(r => r >= derivedTN).length;
+
+    const finalResult = { ...pendingResult, successes, tn: derivedTN };
+
+    addLogEntry({ id: crypto.randomUUID(), timestamp: Date.now(), type: 'roll', content: `Roll (TN ${derivedTN}+)`, result: finalResult });
+
     let newKarma = character.karma;
     let newResolve = character.resolve;
-    if (usePerk) { newKarma = Math.max(0, newKarma - 1); setUsePerk(false); }
+
+    if (usePerk) {
+      newKarma = Math.max(0, newKarma - 1);
+    }
+
     if (useQuirk) {
       if (successes > 0) newResolve = Math.min(6, newResolve + 1);
-      else newKarma = Math.min(6, newKarma + 1);
-      setUseQuirk(false);
+      else if (successes === 0 && action === 'accept') {
+        // If you took a quirk and failed, you usually gain a karma? 
+        // Tricube Rules: "If you accept a Quirk... increase complexity by 1. If you succeed... recover 1 Resolve. If you fail... recover 1 Karma."
+        newKarma = Math.min(6, newKarma + 1);
+      }
     }
+
+    // Explicit resolve spend on failure
+    if (action === 'fail_resolve') {
+      newResolve = Math.max(0, newResolve - 1);
+    }
+
     updateStats({ karma: newKarma, resolve: newResolve });
+
+    // Reset State
     setMatchTrait(false);
     setMatchConcept(false);
+    setUseQuirk(false);
+    setUsePerk(false);
+    setRollPhase('setup');
+    setPendingResult(null);
   };
 
   if (!character) {
@@ -154,9 +196,9 @@ const App = () => {
                 </button>
 
                 {/* Trait */}
-                <button onClick={() => { setMatchTrait(!matchTrait); setMatchConcept(false); }} className="card p-3 text-left transition-all" style={{ width: 'calc(100% - 8px)', margin: '8px auto', display: 'block', borderColor: matchTrait ? 'var(--crimson)' : 'var(--gold)', background: matchTrait ? 'rgba(139,30,63,0.1)' : '' }}>
+                <button onClick={() => { setMatchTrait(!matchTrait); setMatchConcept(false); }} className="card p-3 text-left transition-all" style={{ width: 'calc(100% - 8px)', margin: '8px auto', display: 'block', borderColor: matchTrait ? 'var(--forest)' : 'var(--gold)', background: matchTrait ? 'rgba(139,30,63,0.1)' : '' }}>
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3"><Activity size={18} style={{ color: 'var(--crimson)' }} /><span className="font-bold">{character.trait}</span></div>
+                    <div className="flex items-center gap-3"><Activity size={18} style={{ color: 'var(--forest)' }} /><span className="font-bold">{character.trait}</span></div>
                     <span className="text-sm text-gray-500" style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>3 dice</span>
                   </div>
                 </button>
@@ -165,49 +207,126 @@ const App = () => {
 
 
 
-              {/* Difficulty Modifiers */}
-              <div className="card p-4 space-y-3">
-                <p style={{ textAlign: 'center' }} className="text-xs text-gray-500 uppercase tracking-wider">Difficulty Modifiers</p>
+              {/* Difficulty Modifiers - Split into Phases */}
 
-                {/* All Perks */}
-                <button disabled={character.karma === 0} onClick={() => { setUsePerk(!usePerk); setUseQuirk(false); }} className={`card p-3 text-left transition-all ${character.karma === 0 ? 'opacity-50' : ''}`} style={{ width: 'calc(100% - 8px)', margin: '8px auto', display: 'block', borderColor: usePerk ? 'var(--gold)' : 'var(--gold)', background: usePerk ? 'rgba(201,162,39,0.1)' : '' }}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Zap size={18} style={{ color: 'var(--gold)' }} />
-                      <div>
-                        <span className="font-bold">Perks</span>
-                        <p className="text-xs text-gray-500">{(character.perks || []).join(', ')}</p>
+              {/* PRE-ROLL: QUIRKS ONLY */}
+              {rollPhase === 'setup' && (
+                <div className="card p-4 space-y-3">
+                  <p style={{ textAlign: 'center' }} className="text-xs text-gray-500 uppercase tracking-wider">Take a risk?</p>
+                  <button onClick={() => { setUseQuirk(!useQuirk); }} className="card p-3 text-left transition-all" style={{ width: 'calc(100% - 8px)', margin: '8px auto', display: 'block', borderColor: useQuirk ? 'var(--crimson)' : 'var(--gold)', background: useQuirk ? 'rgba(139,30,63,0.1)' : '' }}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <AlertTriangle size={18} style={{ color: 'var(--crimson)' }} />
+                        <div>
+                          <span className="font-bold">Quirks</span>
+                          <p className="text-xs text-gray-500">{(character.quirks || []).join(', ')}</p>
+                        </div>
                       </div>
+                      <span className="text-sm text-gray-500" style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>+1 TN</span>
                     </div>
-                    <span className="text-sm text-gray-500" style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>-1 TN</span>
-                  </div>
-                </button>
+                  </button>
+                  {useQuirk && <p className="text-xs text-center text-gray-500 italic">Success: +1 Resolve | Fail: +1 Karma</p>}
+                </div>
+              )}
 
-                {/* All Quirks */}
-                <button onClick={() => { setUseQuirk(!useQuirk); setUsePerk(false); }} className="card p-3 text-left transition-all" style={{ width: 'calc(100% - 8px)', margin: '8px auto', display: 'block', borderColor: useQuirk ? 'var(--crimson)' : 'var(--gold)', background: useQuirk ? 'rgba(139,30,63,0.1)' : '' }}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <AlertTriangle size={18} style={{ color: 'var(--crimson)' }} />
-                      <div>
-                        <span className="font-bold">Quirks</span>
-                        <p className="text-xs text-gray-500">{(character.quirks || []).join(', ')}</p>
-                      </div>
-                    </div>
-                    <span className="text-sm text-gray-500" style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>+1 TN</span>
-                  </div>
-                </button>
-              </div>
               {/* Dice Roller */}
               <div className="card p-6 md:p-10">
                 <DiceRoller
                   diceCount={diceCount}
-                  targetNumber={derivedTN}
-                  onRoll={handleRollResult}
+                  targetNumber={derivedTN} // This updates dynamically when perk is toggled in resolve phase
+                  onRoll={handleRollComplete}
                   baseTN={baseTN}
                   onDifficultyChange={setBaseTN}
-                  canSpendResolve={character.resolve > 0}
-                  onSpendResolve={() => updateStats({ resolve: Math.max(0, character.resolve - 1) })}
+                  isResolution={rollPhase === 'resolve'}
+                  pendingResult={pendingResult}
                 />
+
+                {/* POST-ROLL: PERKS & RESOLUTION */}
+                {rollPhase === 'resolve' && pendingResult && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="border-t"
+                    style={{ borderColor: 'var(--gold)', marginTop: '16px', paddingTop: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}
+                  >
+
+                    {/* Result Summary */}
+                    <div className="text-center" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {(() => {
+                        const successes = pendingResult.results.filter(r => r >= derivedTN).length;
+                        const maxRoll = Math.max(...pendingResult.results);
+                        const tnWithoutPerk = usePerk ? derivedTN + 1 : derivedTN;
+                        // Perk only useful if we missed by exactly 1
+                        const isRecoverable = maxRoll === tnWithoutPerk - 1;
+
+                        return (
+                          <>
+                            <p className="font-bold text-3xl" style={{ color: successes > 0 ? 'var(--forest)' : 'var(--crimson)', marginBottom: '8px' }}>
+                              {successes > 0 ? 'SUCCESS!' : 'FAILURE'}
+                            </p>
+                            {successes === 0 && isRecoverable && (
+                              <p className="text-sm text-gray-600 px-4" style={{ marginBottom: '16px', marginLeft: '16px', marginRight: '16px' }}>The outcome is uncertain. Do you have a Perk to change the odds, or will you accept failure?</p>
+                            )}
+                            {successes === 0 && !isRecoverable && (
+                              <p className="text-sm text-gray-500 px-4" style={{ marginBottom: '16px', marginLeft: '16px', marginRight: '16px' }}>The outcome is sealed.</p>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>
+
+                    {/* Perks Selection */}
+                    {(() => {
+                      const maxRoll = Math.max(...pendingResult.results);
+                      const tnWithoutPerk = usePerk ? derivedTN + 1 : derivedTN;
+                      const isRecoverable = maxRoll === tnWithoutPerk - 1;
+
+                      if (!isRecoverable) return null;
+
+                      return (
+                        <div className="rounded-xl border bg-white/50" style={{ borderColor: 'var(--gold)', padding: '16px' }}>
+                          <p className="text-xs text-center text-gray-500 uppercase tracking-wider" style={{ marginBottom: '12px' }}>Apply a Perk?</p>
+                          <button
+                            disabled={character.karma === 0}
+                            onClick={() => setUsePerk(!usePerk)}
+                            className={`card text-left transition-all w-full ${character.karma === 0 ? 'opacity-50' : ''}`}
+                            style={{
+                              borderColor: usePerk ? 'var(--gold)' : 'var(--gold)',
+                              background: usePerk ? 'rgba(201,162,39,0.1)' : 'white',
+                              padding: '16px'
+                            }}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <Zap size={20} style={{ color: 'var(--gold)' }} />
+                                <div>
+                                  <span className="font-bold text-base">Use Perk</span>
+                                  <p className="text-xs text-gray-500">{(character.perks || []).join(', ')}</p>
+                                </div>
+                              </div>
+                              <span className="text-sm text-gray-500 font-medium" style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>-1 TN</span>
+                            </div>
+                          </button>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Action Buttons */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingTop: '8px' }}>
+                      {/* Confirm Result */}
+                      <button onClick={() => commitRoll('accept')} className="btn-primary shadow-lg" style={{ padding: '16px', fontSize: '18px', margin: "8px" }}>
+                        {pendingResult.results.some(r => r >= derivedTN) ? 'OK' : 'Accept Failure'}
+                      </button>
+
+                      {/* Spend Resolve Option (Only on failure and if not using perk to fix it) */}
+                      {!pendingResult.results.some(r => r >= derivedTN) && character.resolve > 0 && (
+                        <button onClick={() => commitRoll('fail_resolve')} className="btn-secondary flex items-center justify-center gap-2" style={{ padding: '4px', margin: "8px" }}>
+                          <Shield size={18} /> Accept Failure & Lose 1 Resolve
+                        </button>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
               </div>
             </motion.div>
           )}
@@ -252,8 +371,18 @@ const App = () => {
               )}
               {session.log.length === 0 ? <p className="text-gray-500">No entries yet.</p> : session.log.map(entry => (
                 <div key={entry.id} className="card p-4" style={{ padding: '16px', marginBottom: '8px' }}>
-                  <p className="font-bold">{entry.content}</p>
-                  <div className="flex gap-2 mt-2">{entry.result?.results.map((r, i) => <span key={i} className={`w-8 h-8 flex items-center justify-center rounded font-bold ${r >= derivedTN ? 'text-white' : 'bg-gray-200'}`} style={{ background: r >= derivedTN ? 'var(--forest)' : '' }}>{r}</span>)}</div>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-xs text-gray-400">{new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    <span className="text-xs font-bold uppercase tracking-wider text-gray-500">{entry.type}</span>
+                  </div>
+                  <p className="font-bold text-gray-800">{entry.content}</p>
+                  {entry.result && entry.result.results && (
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px' }}>
+                      {entry.result.results.map((r, i) => (
+                        <DieFace key={i} value={r} targetNumber={entry.result.tn || 0} size={32} />
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </motion.div>
