@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from './store/useStore';
 import { CharacterCreator } from './components/CharacterCreator';
 import { DiceRoller } from './components/DiceRoller';
 import { Oracle } from './components/Oracle';
 import { GENRES } from './data/genres';
+import { changelogData } from './data/changelog';
+import { ChangelogModal } from './components/ChangelogModal';
 import { User, Dices, Sparkles, History, Settings, Sword, Zap, Shield, Trash2, Activity, AlertTriangle, Star, TrendingUp, Flag, Plus, BookOpen, Type } from 'lucide-react';
 
 const App = () => {
@@ -20,6 +22,22 @@ const App = () => {
   const [customPerk, setCustomPerk] = useState('');
   const [customQuirk, setCustomQuirk] = useState('');
   const [journalEntry, setJournalEntry] = useState('');
+
+  // Changelog State
+  const [showChangelog, setShowChangelog] = useState(false);
+  const latestVersion = changelogData[changelogData.length - 1];
+
+  useEffect(() => {
+    const lastSeenVersion = localStorage.getItem('tricube_last_version');
+    if (lastSeenVersion !== latestVersion.version) {
+      setShowChangelog(true);
+    }
+  }, []);
+
+  const handleCloseChangelog = () => {
+    setShowChangelog(false);
+    localStorage.setItem('tricube_last_version', latestVersion.version);
+  };
 
   const diceCount = matchTrait ? 3 : (matchConcept ? 2 : 1);
   let derivedTN = baseTN;
@@ -326,8 +344,8 @@ const App = () => {
                       <strong>Level Up Rewards:</strong>
                     </p>
                     <div className="text-xs text-gray-600 space-y-2" style={{ marginLeft: '16px' }}>
-                      <p> <strong>Odd levels:</strong> Choose a new Perk OR Quirk</p>
-                      <p> <strong>Even levels:</strong> Increase max Karma OR Resolve</p>
+                      <p> <strong>Every 1 level:</strong> Choose a new Perk OR Quirk</p>
+                      <p> <strong>Every 2 levels:</strong> Increase max Karma OR Resolve</p>
                     </div>
                   </div>
                 )}
@@ -359,14 +377,14 @@ const App = () => {
                       <p className="text-gray-600" style={{ marginTop: '8px' }}>Karma and Resolve restored.</p>
                     </div>
 
-                    <p className="text-center text-sm text-gray-600 mb-4">You are currently Level {currentLevel}. Next level ({nextLevel}) grants: <strong>{isStatUpgrade ? 'Stat Upgrade' : 'Perk/Quirk'}</strong>.</p>
+                    <p className="text-center text-sm text-gray-600 mb-4">You are currently Level {currentLevel + 1}. Next level ({nextLevel + 1}) grants: <strong>{isStatUpgrade ? 'Stat Upgrade' : 'Perk/Quirk'}</strong>.</p>
 
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <button style={{ margin: "16px" }} onClick={() => { setShowLevelUp(false); setLevelUpStep('ask'); }} className="flex-1 btn-secondary">
                         Skip Level Up
                       </button>
                       <button style={{ margin: "16px" }} onClick={() => setLevelUpStep(isStatUpgrade ? 'stat' : 'perk')} className="flex-1 btn-primary flex items-center justify-center gap-2">
-                        <TrendingUp size={16} /> Level Up to {nextLevel}
+                        <TrendingUp size={16} /> Level Up to {nextLevel + 1}
                       </button>
                     </div>
                   </>
@@ -377,7 +395,7 @@ const App = () => {
                   <>
                     <div style={{ textAlign: 'center', marginBottom: '24px' }}>
                       <TrendingUp size={48} style={{ color: 'var(--gold)', margin: '0 auto 12px' }} />
-                      <h2 className="text-2xl font-bold">Level {nextLevel}: Increase Stat</h2>
+                      <h2 className="text-2xl font-bold">Level {nextLevel + 1}: Increase Stat</h2>
                       <p className="text-gray-600" style={{ marginTop: '8px' }}>Time to boost your maximum Karma or Resolve.</p>
                     </div>
 
@@ -427,7 +445,7 @@ const App = () => {
                   <>
                     <div style={{ textAlign: 'center', marginBottom: '24px' }}>
                       <Plus size={48} style={{ color: 'var(--forest)', margin: '0 auto 12px' }} />
-                      <h2 className="text-2xl font-bold">Level {nextLevel}: New Trait</h2>
+                      <h2 className="text-2xl font-bold">Level {nextLevel + 1}: New Trait</h2>
                       <p className="text-gray-600" style={{ marginTop: '8px' }}>Choose one new perk or quirk from your genre.</p>
                     </div>
 
@@ -542,7 +560,15 @@ const App = () => {
             </motion.div>
           );
         })()}
+
       </AnimatePresence>
+
+      {/* Changelog Modal */}
+      <ChangelogModal
+        isOpen={showChangelog}
+        onClose={handleCloseChangelog}
+        updates={latestVersion}
+      />
     </div>
   );
 };

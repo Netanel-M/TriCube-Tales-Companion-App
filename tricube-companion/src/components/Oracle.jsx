@@ -71,7 +71,7 @@ export const Oracle = () => {
         <div className="flex flex-col items-center gap-4 w-full max-w-xl mx-auto h-[500px]">
 
             {/* Tabs */}
-            <div className="flex gap-2 p-1 rounded-xl w-full border shrink-0" style={{ borderColor: 'var(--gold)', background: 'rgba(0,0,0,0.05)' }}>
+            <div className="flex gap-2 p-1  w-full shrink-0" style={{ borderColor: 'var(--gold)', padding: '5px', margin: '10px' }}>
                 {[
                     { id: 'spark', icon: Sparkles, label: 'Spark' },
                     { id: 'yesno', icon: HelpCircle, label: 'Ask' },
@@ -244,11 +244,13 @@ export const Oracle = () => {
             </div>
 
             {/* Action Area (Fixed Bottom) */}
-            <div className="w-full shrink-0 border-t pt-4" style={{ borderColor: 'var(--gold)' }}>
+            {/* Action Area (Fixed Bottom) */}
+            <div className="w-full shrink-0 border-t" style={{ borderColor: 'var(--gold)' }}>
                 <button
                     onClick={actionConfig.action}
                     disabled={actionConfig.disabled}
-                    className="btn-primary w-full flex items-center justify-center gap-2 px-8 py-4 text-lg"
+                    className="btn-primary flex items-center justify-center gap-2 px-8 py-4 text-lg"
+                    style={{ margin: '16px', width: 'calc(100% - 32px)' }}
                 >
                     <ActionIcon size={20} className={actionConfig.disabled ? 'animate-spin' : ''} />
                     {actionConfig.label}
