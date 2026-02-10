@@ -12,6 +12,9 @@ export const useStore = create(
                 log: [],
             },
             customTags: [],
+            preferences: {
+                fontSize: 16,
+            },
 
             setCharacter: (char) => {
                 try {
@@ -41,6 +44,12 @@ export const useStore = create(
             addCustomTag: (tag, category) => {
                 set((state) => ({
                     customTags: [...state.customTags, { tag, category }],
+                }));
+            },
+
+            setFontSize: (size) => {
+                set((state) => ({
+                    preferences: { ...state.preferences, fontSize: size },
                 }));
             },
 

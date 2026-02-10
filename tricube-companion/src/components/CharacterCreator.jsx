@@ -65,7 +65,7 @@ export const CharacterCreator = () => {
                                     key={genre.id}
                                     onClick={() => setFormData({ ...formData, genre: genre.id })}
                                     className={`card p-5 text-left transition-all ${isSelected ? 'ring-2' : ''}`}
-                                    style={{ borderColor: isSelected ? 'var(--crimson)' : 'var(--gold)' }}
+                                    style={{ borderColor: isSelected ? 'var(--crimson)' : 'var(--gold)', marginBottom: '4px' }}
                                 >
                                     <div className="flex items-center gap-4 mb-2">
                                         <Icon size={24} style={{ color: 'var(--crimson)' }} />
@@ -97,36 +97,64 @@ export const CharacterCreator = () => {
                             <p className="font-bold mb-3">Trait (Primary Strength)</p>
                             <div className="flex flex-wrap gap-3">
                                 {['Brawny', 'Agile', 'Crafty'].map(t => (
-                                    <button key={t} onClick={() => setFormData({ ...formData, trait: t })} className="btn-secondary" style={{ background: formData.trait === t ? 'var(--gold)' : '', color: formData.trait === t ? 'white' : '' }}>{t}</button>
+                                    <button key={t} onClick={() => setFormData({ ...formData, trait: t })} className="btn-secondary" style={{ background: formData.trait === t ? 'var(--gold)' : '', color: formData.trait === t ? 'white' : '', margin: '4px' }}>{t}</button>
                                 ))}
                             </div>
                         </div>
                         <div>
                             <p className="font-bold mb-3">Concept (Your Role)</p>
-                            <div className="flex flex-wrap gap-3">
+                            <div className="flex flex-wrap gap-3 mb-3">
                                 {selectedGenre.concepts.map(c => (
-                                    <button key={c} onClick={() => setFormData({ ...formData, concept: c })} className="btn-secondary" style={{ background: formData.concept === c ? 'var(--gold)' : '', color: formData.concept === c ? 'white' : '' }}>{c}</button>
+                                    <button key={c} onClick={() => setFormData({ ...formData, concept: c })} className="btn-secondary" style={{ background: formData.concept === c ? 'var(--gold)' : '', color: formData.concept === c ? 'white' : '', margin: '4px' }}>{c}</button>
                                 ))}
                             </div>
+                            <input
+                                type="text"
+                                value={selectedGenre.concepts.includes(formData.concept) ? '' : formData.concept}
+                                onChange={e => setFormData({ ...formData, concept: e.target.value })}
+                                placeholder="Or enter your own..."
+                                className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 text-sm"
+                                style={{ borderColor: 'var(--gold)', '--tw-ring-color': 'var(--forest)' }}
+                            />
                         </div>
                     </div>
                 )}
 
                 {/* Step 3: Perk */}
                 {step === 3 && selectedGenre && (
-                    <div className="flex flex-wrap gap-3">
-                        {selectedGenre.perks.map(p => (
-                            <button key={p} onClick={() => setFormData({ ...formData, perk: p })} className="btn-secondary" style={{ background: formData.perk === p ? 'var(--forest)' : '', color: formData.perk === p ? 'white' : '' }}>{p}</button>
-                        ))}
+                    <div className="flex flex-col gap-4">
+                        <div className="flex flex-wrap gap-3">
+                            {selectedGenre.perks.map(p => (
+                                <button key={p} onClick={() => setFormData({ ...formData, perk: p })} className="btn-secondary" style={{ background: formData.perk === p ? 'var(--forest)' : '', color: formData.perk === p ? 'white' : '', margin: '4px' }}>{p}</button>
+                            ))}
+                        </div>
+                        <input
+                            type="text"
+                            value={selectedGenre.perks.includes(formData.perk) ? '' : formData.perk}
+                            onChange={e => setFormData({ ...formData, perk: e.target.value })}
+                            placeholder="Or define a custom Perk..."
+                            className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 text-sm"
+                            style={{ borderColor: 'var(--gold)', '--tw-ring-color': 'var(--forest)' }}
+                        />
                     </div>
                 )}
 
                 {/* Step 4: Quirk */}
                 {step === 4 && selectedGenre && (
-                    <div className="flex flex-wrap gap-3">
-                        {selectedGenre.quirks.map(q => (
-                            <button key={q} onClick={() => setFormData({ ...formData, quirk: q })} className="btn-secondary" style={{ background: formData.quirk === q ? 'var(--crimson)' : '', color: formData.quirk === q ? 'white' : '' }}>{q}</button>
-                        ))}
+                    <div className="flex flex-col gap-4">
+                        <div className="flex flex-wrap gap-3">
+                            {selectedGenre.quirks.map(q => (
+                                <button key={q} onClick={() => setFormData({ ...formData, quirk: q })} className="btn-secondary" style={{ background: formData.quirk === q ? 'var(--crimson)' : '', color: formData.quirk === q ? 'white' : '', margin: '4px' }}>{q}</button>
+                            ))}
+                        </div>
+                        <input
+                            type="text"
+                            value={selectedGenre.quirks.includes(formData.quirk) ? '' : formData.quirk}
+                            onChange={e => setFormData({ ...formData, quirk: e.target.value })}
+                            placeholder="Or define a custom Quirk..."
+                            className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 text-sm"
+                            style={{ borderColor: 'var(--gold)', '--tw-ring-color': 'var(--crimson)' }}
+                        />
                     </div>
                 )}
 

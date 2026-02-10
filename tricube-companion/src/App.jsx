@@ -5,10 +5,10 @@ import { CharacterCreator } from './components/CharacterCreator';
 import { DiceRoller } from './components/DiceRoller';
 import { Oracle } from './components/Oracle';
 import { GENRES } from './data/genres';
-import { User, Dices, Sparkles, History, Settings, Sword, Zap, Shield, Trash2, Activity, AlertTriangle, Star, TrendingUp, Flag, Plus } from 'lucide-react';
+import { User, Dices, Sparkles, History, Settings, Sword, Zap, Shield, Trash2, Activity, AlertTriangle, Star, TrendingUp, Flag, Plus, BookOpen, Type } from 'lucide-react';
 
 const App = () => {
-  const { character, session, addLogEntry, updateStats, resetGame, endScene } = useStore();
+  const { character, session, addLogEntry, updateStats, resetGame, endScene, preferences, setFontSize } = useStore();
   const [activeTab, setActiveTab] = useState('game');
   const [matchTrait, setMatchTrait] = useState(false);
   const [matchConcept, setMatchConcept] = useState(false);
@@ -17,6 +17,9 @@ const App = () => {
   const [baseTN, setBaseTN] = useState(5);
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [levelUpStep, setLevelUpStep] = useState('ask'); // 'ask', 'stat', 'perk'
+  const [customPerk, setCustomPerk] = useState('');
+  const [customQuirk, setCustomQuirk] = useState('');
+  const [journalEntry, setJournalEntry] = useState('');
 
   const diceCount = matchTrait ? 3 : (matchConcept ? 2 : 1);
   let derivedTN = baseTN;
@@ -54,11 +57,11 @@ const App = () => {
     { id: 'game', icon: Dices, label: 'Roll' },
     { id: 'oracle', icon: Sparkles, label: 'Oracle' },
     { id: 'logs', icon: History, label: 'Logs' },
-    { id: 'sys', icon: Settings, label: 'Settings' }
+    { id: 'settings', icon: Settings, label: 'Settings' }
   ];
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'var(--parchment)' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: 'var(--parchment)', fontSize: `${preferences?.fontSize || 16}px` }}>
       {/* Header */}
       <header style={{ padding: '16px', borderBottom: '1px solid var(--gold)', background: 'rgba(255,255,255,0.5)' }}>
         <div className="app-container">
@@ -86,14 +89,23 @@ const App = () => {
                 </div>
               </div>
             </div>
-            {/* End Scene Button */}
-            <button
-              onClick={() => { endScene(); setShowLevelUp(true); }}
-              className="btn-secondary flex items-center gap-2"
-              style={{ padding: '8px 12px', fontSize: '12px', flexShrink: 0 }}
-            >
-              <Flag size={14} /> End Session
-            </button>
+            {/* End Buttons */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '110px' }}>
+              <button
+                onClick={() => endScene()}
+                className="btn-secondary flex items-center justify-center gap-2"
+                style={{ padding: '8px 12px', fontSize: '12px', width: '100%' }}
+              >
+                <Sparkles size={14} /> End Scene
+              </button>
+              <button
+                onClick={() => { endScene(); setShowLevelUp(true); }}
+                className="btn-secondary flex items-center justify-center gap-2"
+                style={{ padding: '8px 12px', fontSize: '12px', width: '100%' }}
+              >
+                <Flag size={14} /> End Session
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -105,7 +117,7 @@ const App = () => {
             <motion.div key="game" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
               {/* Dice Advantage */}
               <div className="card p-4 space-y-3">
-                <p style={{ textAlign: 'center' }} className="text-xs text-gray-500 uppercase tracking-wider">Do you have advantage?</p>
+                <p style={{ textAlign: 'center', paddingLeft: '16px', paddingRight: '16px' }} className="text-xs text-gray-500 uppercase tracking-wider">Do you have advantage?</p>
 
                 {/* No Advantage */}
                 <button onClick={() => { setMatchTrait(false); setMatchConcept(false); }} className="card p-3 text-left transition-all" style={{ width: 'calc(100% - 8px)', margin: '8px auto 0', display: 'block', borderColor: (!matchTrait && !matchConcept) ? 'var(--crimson)' : 'var(--gold)', background: (!matchTrait && !matchConcept) ? 'rgba(139,30,63,0.1)' : '' }}>
@@ -188,22 +200,71 @@ const App = () => {
                 <h2 className="text-2xl font-bold text-gradient">Adventure Log</h2>
 
               </div>
+
+              {/* Journal Entry Input */}
+              <div className="card p-6" style={{ marginBottom: '16px', padding: '32px' }}>
+                <textarea
+                  value={journalEntry}
+                  onChange={(e) => setJournalEntry(e.target.value)}
+                  placeholder="Writer's Log: Describe the scene or add notes..."
+                  className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 text-sm"
+                  style={{ borderColor: 'var(--gold)', '--tw-ring-color': 'var(--forest)', minHeight: '80px', marginBottom: '8px' }}
+                />
+                <button
+                  onClick={() => {
+                    if (journalEntry.trim()) {
+                      useStore.getState().addLogEntry({ id: Date.now(), content: journalEntry, type: 'journal' });
+                      setJournalEntry('');
+                    }
+                  }}
+                  disabled={!journalEntry.trim()}
+                  className="btn-primary text-sm disabled:opacity-50 block mx-auto"
+                  style={{ marginTop: '8px', padding: '8px 24px' }}
+                >
+                  <BookOpen size={14} style={{ display: 'inline', marginRight: '6px' }} />
+                  Add to Log
+                </button>
+              </div>
+
               {session.log.length > 0 && (
 
-                <button onClick={() => useStore.getState().clearLog()} className="btn-secondary" style={{ padding: '8px 16px', fontSize: '12px' }}>
+                <button onClick={() => useStore.getState().clearLog()} className="btn-secondary" style={{ padding: '8px 16px', fontSize: '12px', marginBottom: "8px" }}>
                   Clear Log
                 </button>
               )}
               {session.log.length === 0 ? <p className="text-gray-500">No entries yet.</p> : session.log.map(entry => (
-                <div key={entry.id} className="card p-4">
+                <div key={entry.id} className="card p-4" style={{ padding: '16px', marginBottom: '8px' }}>
                   <p className="font-bold">{entry.content}</p>
                   <div className="flex gap-2 mt-2">{entry.result?.results.map((r, i) => <span key={i} className={`w-8 h-8 flex items-center justify-center rounded font-bold ${r >= derivedTN ? 'text-white' : 'bg-gray-200'}`} style={{ background: r >= derivedTN ? 'var(--forest)' : '' }}>{r}</span>)}</div>
                 </div>
               ))}
             </motion.div>
           )}
-          {activeTab === 'sys' && (
-            <motion.div key="sys" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="card p-10 text-center">
+          {activeTab === 'settings' && (
+            <motion.div key="settings" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="card p-10 text-center">
+
+              {/* Font Size Slider */}
+              <div className="mb-8 p-4 border rounded-lg bg-white/50" style={{ borderColor: 'var(--gold)' }}>
+                <p className="font-bold mb-4 flex items-center justify-center gap-2">
+                  <Type size={18} /> Font Size: {preferences?.fontSize || 16}px
+                </p>
+                <input
+                  type="range"
+                  min="12"
+                  max="32"
+                  step="1"
+                  value={preferences?.fontSize || 16}
+                  onChange={(e) => setFontSize(parseInt(e.target.value))}
+                  className="w-full accent-[var(--forest)]"
+                  style={{ height: '6px', borderRadius: '3px' }}
+                />
+                <div className="flex justify-between text-xs text-gray-500 mt-2">
+                  <span>Small</span>
+                  <span>Medium</span>
+                  <span>Large</span>
+                </div>
+              </div>
+
               <Trash2 size={48} className="mx-auto mb-4" style={{ color: 'var(--crimson)' }} />
               <h2 className="text-2xl font-bold mb-2">Reset Adventure</h2>
               <p className="text-gray-600 mb-6">This will delete your character and all logs.</p>
@@ -256,7 +317,7 @@ const App = () => {
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
                 className="card p-6"
-                style={{ maxWidth: '450px', width: '100%', background: 'white' }}
+                style={{ maxWidth: '450px', width: '100%', background: 'white', maxHeight: '90vh', overflowY: 'auto' }}
               >
                 {/* Scene rewards info - Only show in 'ask' step */}
                 {levelUpStep === 'ask' && (
@@ -276,7 +337,7 @@ const App = () => {
                   <div style={{ display: 'flex', gap: '12px', margin: '24px' }}>
                     <div className="flex-1 text-center card p-3">
                       <p className="text-2xl font-bold" style={{ color: 'var(--crimson)' }}>{character.sceneCount || 1}</p>
-                      <p className="text-xs text-gray-500">Scenes</p>
+                      <p className="text-xs text-gray-500">Sessions</p>
                     </div>
                     <div className="flex-1 text-center card p-3">
                       <p className="text-2xl font-bold" style={{ color: 'var(--gold)' }}>{character.maxKarma || 3}</p>
@@ -294,17 +355,17 @@ const App = () => {
                   <>
                     <div style={{ textAlign: 'center', marginBottom: '24px' }}>
                       <Flag size={48} style={{ color: 'var(--crimson)', margin: '0 auto 12px' }} />
-                      <h2 className="text-2xl font-bold">Scene Complete!</h2>
+                      <h2 className="text-2xl font-bold">Session Complete!</h2>
                       <p className="text-gray-600" style={{ marginTop: '8px' }}>Karma and Resolve restored.</p>
                     </div>
 
                     <p className="text-center text-sm text-gray-600 mb-4">You are currently Level {currentLevel}. Next level ({nextLevel}) grants: <strong>{isStatUpgrade ? 'Stat Upgrade' : 'Perk/Quirk'}</strong>.</p>
 
                     <div style={{ display: 'flex', gap: '8px' }}>
-                      <button onClick={() => { setShowLevelUp(false); setLevelUpStep('ask'); }} className="flex-1 btn-secondary">
+                      <button style={{ margin: "16px" }} onClick={() => { setShowLevelUp(false); setLevelUpStep('ask'); }} className="flex-1 btn-secondary">
                         Skip Level Up
                       </button>
-                      <button onClick={() => setLevelUpStep(isStatUpgrade ? 'stat' : 'perk')} className="flex-1 btn-primary flex items-center justify-center gap-2">
+                      <button style={{ margin: "16px" }} onClick={() => setLevelUpStep(isStatUpgrade ? 'stat' : 'perk')} className="flex-1 btn-primary flex items-center justify-center gap-2">
                         <TrendingUp size={16} /> Level Up to {nextLevel}
                       </button>
                     </div>
@@ -320,7 +381,7 @@ const App = () => {
                       <p className="text-gray-600" style={{ marginTop: '8px' }}>Time to boost your maximum Karma or Resolve.</p>
                     </div>
 
-                    <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+                    <div style={{ display: 'flex', gap: '8px', margin: '16px' }}>
                       <button
                         onClick={() => {
                           if ((character.maxKarma || 3) < 6) {
@@ -355,7 +416,7 @@ const App = () => {
                       </button>
                     </div>
 
-                    <button onClick={() => { setShowLevelUp(false); setLevelUpStep('ask'); }} className="btn-secondary w-full text-sm">
+                    <button style={{ marginBottom: "4px" }} onClick={() => { setShowLevelUp(false); setLevelUpStep('ask'); }} className="btn-secondary w-full text-sm">
                       Cancel (Skip Level Up)
                     </button>
                   </>
@@ -371,8 +432,8 @@ const App = () => {
                     </div>
 
                     <div style={{ marginBottom: '16px' }}>
-                      <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Perks (reduce difficulty)</p>
-                      <div className="flex flex-wrap gap-2">
+                      <p style={{ margin: "16px" }} className="text-xs text-gray-500 uppercase tracking-wider mb-2">Perks (reduce difficulty)</p>
+                      <div className="flex flex-wrap gap-2 mb-3">
                         {selectedGenre.perks.filter(p => !(character.perks || []).includes(p)).map(perk => (
                           <button
                             key={perk}
@@ -382,7 +443,7 @@ const App = () => {
                               setLevelUpStep('ask');
                             }}
                             className="btn-secondary text-sm"
-                            style={{ background: 'rgba(201,162,39,0.1)' }}
+                            style={{ background: 'rgba(201,162,39,0.1)', margin: "4px" }}
                           >
                             <Zap size={12} style={{ display: 'inline', marginRight: '4px', color: 'var(--gold)' }} />
                             {perk}
@@ -392,11 +453,38 @@ const App = () => {
                           <p className="text-xs text-gray-400">All perks collected!</p>
                         )}
                       </div>
+
+                      {/* Custom Perk Input */}
+                      <div className="flex flex-col gap-2">
+                        <input
+                          type="text"
+                          placeholder="Or define custom perk..."
+                          value={customPerk}
+                          disabled={customQuirk.length > 0}
+                          onChange={(e) => setCustomPerk(e.target.value)}
+                          className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 text-sm disabled:bg-gray-50 disabled:text-gray-300"
+                          style={{ borderColor: 'var(--gold)', '--tw-ring-color': 'var(--forest)' }}
+                        />
+                        {customPerk && (
+                          <button
+                            onClick={() => {
+                              updateStats({ perks: [...(character.perks || []), customPerk], level: nextLevel });
+                              setShowLevelUp(false);
+                              setLevelUpStep('ask');
+                              setCustomPerk('');
+                              setCustomQuirk('');
+                            }}
+                            className="btn-primary w-full flex items-center justify-center gap-2 text-xs py-2"
+                          >
+                            <Plus size={14} /> Confirm Custom Perk
+                          </button>
+                        )}
+                      </div>
                     </div>
 
-                    <div style={{ marginBottom: '16px' }}>
+                    <div style={{ marginBottom: '16px', borderTop: '1px solid #eee', paddingTop: '16px' }}>
                       <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Quirks (increase difficulty, gain resources)</p>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-2 mb-3">
                         {selectedGenre.quirks.filter(q => !(character.quirks || []).includes(q)).map(quirk => (
                           <button
                             key={quirk}
@@ -406,7 +494,7 @@ const App = () => {
                               setLevelUpStep('ask');
                             }}
                             className="btn-secondary text-sm"
-                            style={{ background: 'rgba(139,30,63,0.1)' }}
+                            style={{ background: 'rgba(139,30,63,0.1)', margin: "4px" }}
                           >
                             <AlertTriangle size={12} style={{ display: 'inline', marginRight: '4px', color: 'var(--crimson)' }} />
                             {quirk}
@@ -416,9 +504,36 @@ const App = () => {
                           <p className="text-xs text-gray-400">All quirks collected!</p>
                         )}
                       </div>
+
+                      {/* Custom Quirk Input */}
+                      <div className="flex flex-col gap-2">
+                        <input
+                          type="text"
+                          placeholder="Or define custom quirk..."
+                          value={customQuirk}
+                          disabled={customPerk.length > 0}
+                          onChange={(e) => setCustomQuirk(e.target.value)}
+                          className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 text-sm disabled:bg-gray-50 disabled:text-gray-300"
+                          style={{ borderColor: 'var(--gold)', '--tw-ring-color': 'var(--crimson)' }}
+                        />
+                        {customQuirk && (
+                          <button
+                            onClick={() => {
+                              updateStats({ quirks: [...(character.quirks || []), customQuirk], level: nextLevel });
+                              setShowLevelUp(false);
+                              setLevelUpStep('ask');
+                              setCustomPerk('');
+                              setCustomQuirk('');
+                            }}
+                            className="btn-primary w-full flex items-center justify-center gap-2 text-xs py-2"
+                          >
+                            <Plus size={14} /> Confirm Custom Quirk
+                          </button>
+                        )}
+                      </div>
                     </div>
 
-                    <button onClick={() => { setShowLevelUp(false); setLevelUpStep('ask'); }} className="btn-secondary w-full">
+                    <button onClick={() => { setShowLevelUp(false); setLevelUpStep('ask'); setCustomPerk(''); setCustomQuirk(''); }} className="btn-secondary w-full">
                       Cancel (Skip Level Up)
                     </button>
                   </>
